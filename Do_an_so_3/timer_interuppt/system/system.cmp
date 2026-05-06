@@ -1,0 +1,12 @@
+	component system is
+		port (
+			clk_clk                          : in  std_logic                    := 'X'; -- clk
+			hex_0_external_connection_export : out std_logic_vector(7 downto 0);        -- export
+			hex_1_external_connection_export : out std_logic_vector(7 downto 0);        -- export
+			hex_2_external_connection_export : out std_logic_vector(7 downto 0);        -- export
+			hex_3_external_connection_export : out std_logic_vector(7 downto 0);        -- export
+			hex_4_external_connection_export : out std_logic_vector(7 downto 0);        -- export
+			hex_5_external_connection_export : out std_logic_vector(7 downto 0)         -- export
+		);
+	end component system;
+

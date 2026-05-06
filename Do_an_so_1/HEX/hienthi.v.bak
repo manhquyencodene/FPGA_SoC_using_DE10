@@ -1,0 +1,48 @@
+#include <stdio.h>
+#include <unistd.h> // Thư viện chứa hàm usleep
+#include "io.h"     // Thư viện hỗ trợ hàm IOWR [cite: 182]
+#include "system.h" // Thư viện chứa các định nghĩa HEX0_BASE, HEX1_BASE... [cite: 183]
+
+// Mảng chứa mã Hex cho LED 7 đoạn (Anode chung) từ 0 đến 9 [cite: 184-214]
+unsigned char hex_code[10] = {
+    0xC0, // 0: 1100 0000 [cite: 186]
+    0xF9, // 1: 1111 1001 [cite: 188, 189]
+    0xA4, // 2: 1010 0100 [cite: 191, 192]
+    0xB0, // 3: 1011 0000 [cite: 194, 195]
+    0x99, // 4: 1001 1001 [cite: 197, 198]
+    0x92, // 5: 1001 0010 [cite: 200, 201]
+    0x82, // 6: 1000 0010 [cite: 203, 204]
+    0xF8, // 7: 1111 1000 [cite: 206, 207]
+    0x80, // 8: 1000 0000 [cite: 209, 210]
+    0x90  // 9: 1001 0000 [cite: 212, 213]
+};
+
+int main() {
+    // Khởi tạo thời gian ban đầu theo ví dụ: 12 giờ 38 phút 12 giây 
+    int gio = 12;
+    int phut = 38;
+    int giay = 12;
+
+    while (1) { // Vòng lặp vô hạn [cite: 220]
+        
+        // --- BƯỚC 1: XUẤT DỮ LIỆU RA LED 7 ĐOẠN ---
+        
+        // Hiển thị phần GIÂY [cite: 247]
+        IOWR(HEX0_BASE, 0, hex_code[giay % 10]); // HEX 0: Hàng đơn vị của giây [cite: 248]
+        IOWR(HEX1_BASE, 0, hex_code[giay / 10]); // HEX 1: Hàng chục của giây [cite: 249]
+        
+        // --- BƯỚC 2: TẠO TRỄ ĐÚNG 1 GIÂY ---
+        usleep(1000000); // Delay 1,000,000 micro-giây = 1 giây 
+
+        // --- BƯỚC 3: CẬP NHẬT THỜI GIAN ---
+        giay++; // Tăng thêm 1 giây
+        
+        if (giay >= 60) {
+            giay = 0; // Reset giây về 0
+            phut++;   // Tăng thêm 1 phút
+            
+		}           
+    }
+
+    return 0; // [cite: 240]
+}

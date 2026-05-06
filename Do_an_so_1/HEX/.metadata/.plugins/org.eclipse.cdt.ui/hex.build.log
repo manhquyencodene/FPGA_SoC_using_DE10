@@ -1,0 +1,18 @@
+14:38:58 **** Incremental Build of configuration Nios II for project hex ****
+make all 
+Info: Building ../hex_bsp/
+C:/intelFPGA_lite/18.1/nios2eds/bin/gnu/H-x86_64-mingw32/bin/make --no-print-directory -C ../hex_bsp/
+[BSP build complete]
+Info: Compiling hello_world.c to obj/default/hello_world.o
+nios2-elf-gcc -xc -MP -MMD -c -I../hex_bsp//HAL/inc -I../hex_bsp/ -I../hex_bsp//drivers/inc  -pipe -D__hal__ -DALT_NO_INSTRUCTION_EMULATION -DALT_USE_SMALL_DRIVERS -DSMALL_C_LIB -DALT_SINGLE_THREADED    -O0 -g -Wall   -mno-hw-div -mno-hw-mul -mno-hw-mulx -mgpopt=global  -o obj/default/hello_world.o hello_world.c
+Info: Linking hex.elf
+nios2-elf-g++  -T'../hex_bsp//linker.x' -msys-crt0='../hex_bsp//obj/HAL/src/crt0.o' -msys-lib=hal_bsp -L../hex_bsp/  -msmallc  -Wl,-Map=hex.map   -O0 -g -Wall   -mno-hw-div -mno-hw-mul -mno-hw-mulx -mgpopt=global  -o hex.elf obj/default/hello_world.o -lm -msys-lib=m
+nios2-elf-insert hex.elf --thread_model hal --cpu_name nios2_gen2_0 --qsys true --simulation_enabled false --stderr_dev jtag_uart_0 --stdin_dev jtag_uart_0 --stdout_dev jtag_uart_0 --sopc_system_name system --quartus_project_dir "D:/SoC_quartus/HEX" --jdi ../..//output_files/hienthi.jdi --sopcinfo D:/SoC_quartus/HEX/software/hex_bsp/../../system.sopcinfo
+Info: (hex.elf) 7592 Bytes program size (code + initialized data).
+Info:           23 KBytes free for stack + heap.
+Info: Creating hex.objdump
+nios2-elf-objdump --disassemble --syms --all-header --source hex.elf >hex.objdump
+[hex build complete]
+
+14:39:00 Build Finished (took 1s.705ms)
+

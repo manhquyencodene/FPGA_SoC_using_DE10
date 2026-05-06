@@ -1,0 +1,86 @@
+#include <stdio.h>
+#include "io.h"
+#include "system.h"
+#include "altera_avalon_timer_regs.h"
+#include "altera_avalon_pio_regs.h"
+#include "sys/alt_irq.h"
+
+
+volatile int hours = 12;
+volatile int minutes = 59;
+volatile int seconds = 0;
+
+
+
+unsigned char hex_code[] = {
+    0x40, // 0
+    0x79, // 1
+    0x24, // 2
+    0x30, // 3
+    0x19, // 4
+    0x12, // 5
+    0x02, // 6
+    0x78, // 7
+    0x00, // 8
+    0x10  // 9
+};
+
+void display_time() {
+    IOWR_ALTERA_AVALON_PIO_DATA(HEX_0_BASE, hex_code[seconds % 10]);
+    IOWR_ALTERA_AVALON_PIO_DATA(HEX_1_BASE, hex_code[seconds / 10]);
+    IOWR_ALTERA_AVALON_PIO_DATA(HEX_2_BASE, hex_code[minutes % 10]);
+    IOWR_ALTERA_AVALON_PIO_DATA(HEX_3_BASE, hex_code[minutes / 10]);
+    IOWR_ALTERA_AVALON_PIO_DATA(HEX_4_BASE, hex_code[hours % 10]);
+    IOWR_ALTERA_AVALON_PIO_DATA(HEX_5_BASE, hex_code[hours / 10]);
+}
+
+
+void Timer_IRQ_Handler(void* isr_context) {
+    seconds++;
+    if (seconds >= 60) {
+        seconds = 0;
+        minutes++;
+        if (minutes >= 60) {
+            minutes = 0;
+            hours++;
+            if (hours >= 24) {
+                hours = 0;
+            }
+        }
+    }
+
+
+    display_time();
+
+
+    IOWR_ALTERA_AVALON_TIMER_STATUS(TIMER_0_BASE, ALTERA_AVALON_TIMER_STATUS_TO_MSK);
+}
+
+
+void timer_init() {
+    unsigned int period = 50000000; // 50MHz tương ứng 1 giây
+
+    IOWR_ALTERA_AVALON_TIMER_CONTROL(TIMER_0_BASE, ALTERA_AVALON_TIMER_CONTROL_STOP_MSK);
+
+    IOWR_ALTERA_AVALON_TIMER_PERIODL(TIMER_0_BASE, (period & 0xFFFF));
+    IOWR_ALTERA_AVALON_TIMER_PERIODH(TIMER_0_BASE, (period >> 16));
+
+    IOWR_ALTERA_AVALON_TIMER_CONTROL(TIMER_0_BASE,
+        ALTERA_AVALON_TIMER_CONTROL_CONT_MSK |
+        ALTERA_AVALON_TIMER_CONTROL_ITO_MSK |
+        ALTERA_AVALON_TIMER_CONTROL_START_MSK);
+}
+
+int main() {
+    printf("Clock system starting...\n");
+
+    display_time();
+
+    timer_init();
+
+    alt_ic_isr_register(0, TIMER_0_IRQ, Timer_IRQ_Handler, (void*)0, (void*)0);
+
+    while (1);
+
+    return 0;
+}

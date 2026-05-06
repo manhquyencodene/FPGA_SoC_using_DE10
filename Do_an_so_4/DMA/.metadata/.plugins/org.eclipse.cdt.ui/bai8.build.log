@@ -1,0 +1,9 @@
+10:27:19 **** Build of configuration Nios II for project bai8 ****
+make all 
+Info: Building ../bai8_bsp/
+C:/intelFPGA_lite/18.1/nios2eds/bin/gnu/H-x86_64-mingw32/bin/make --no-print-directory -C ../bai8_bsp/
+[BSP build complete]
+[bai8 build complete]
+
+10:27:20 Build Finished (took 752ms)
+

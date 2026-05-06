@@ -1,0 +1,13 @@
+module timer (
+    input CLOCK_50,    // Đầu vào xung clock 50MHz
+    input [0:0] KEY    // Đầu vào nút nhấn (Reset)
+);
+
+    // Khởi tạo (instantiate) hệ thống Nios II
+    // Tên module con thường là tên bạn đặt trong Platform Designer (Nios_system)
+    Nios_system u0 (
+        .clk_clk       (CLOCK_50), // Kết nối xung clock
+        .reset_reset_n (KEY[0])    // Kết nối nút nhấn làm tín hiệu Reset (tích cực thấp)
+    );
+
+endmodule

@@ -1,0 +1,21 @@
+# # File gsaved with Nlview version 6.3.8  2013-12-19 bk=1.2992 VDI=34 GEI=35
+# 
+preplace inst system.nios2_gen2_0.cpu -pg 1
+preplace inst system.nios2_gen2_0.clock_bridge -pg 1
+preplace inst system.jtag_uart_0 -pg 1 -lvl 2 -y 130
+preplace inst system.nios2_gen2_0.reset_bridge -pg 1
+preplace inst system.clock -pg 1 -lvl 2 -y 450
+preplace inst system.onchip_memory2_0 -pg 1 -lvl 2 -y 330
+preplace inst system.nios2_gen2_0 -pg 1 -lvl 1 -y 100
+preplace inst system.hex0 -pg 1 -lvl 2 -y 30
+preplace inst system.hex1 -pg 1 -lvl 2 -y 230
+preplace inst system -pg 1 -lvl 1 -y 40 -regy -20
+preplace netloc EXPORT<net_container>system</net_container>(SLAVE)hex1.external_connection,(SLAVE)system.hex1) 1 0 2 NJ 320 NJ
+preplace netloc INTERCONNECT<net_container>system</net_container>(SLAVE)onchip_memory2_0.reset1,(SLAVE)hex1.reset,(MASTER)nios2_gen2_0.debug_reset_request,(SLAVE)nios2_gen2_0.reset,(SLAVE)clock.clk_in_reset,(SLAVE)jtag_uart_0.reset,(SLAVE)hex0.reset,(MASTER)clock.clk_reset) 1 0 3 90 300 490 440 790
+preplace netloc EXPORT<net_container>system</net_container>(SLAVE)system.clk,(SLAVE)clock.clk_in) 1 0 2 NJ 460 NJ
+preplace netloc FAN_OUT<net_container>system</net_container>(SLAVE)onchip_memory2_0.clk1,(SLAVE)hex0.clk,(SLAVE)nios2_gen2_0.clk,(MASTER)clock.clk,(SLAVE)jtag_uart_0.clk,(SLAVE)hex1.clk) 1 0 3 70 280 530 420 810
+preplace netloc INTERCONNECT<net_container>system</net_container>(SLAVE)jtag_uart_0.avalon_jtag_slave,(SLAVE)hex0.s1,(MASTER)nios2_gen2_0.instruction_master,(SLAVE)hex1.s1,(SLAVE)onchip_memory2_0.s1,(MASTER)nios2_gen2_0.data_master,(SLAVE)nios2_gen2_0.debug_mem_slave) 1 0 2 110 260 510
+preplace netloc POINT_TO_POINT<net_container>system</net_container>(MASTER)nios2_gen2_0.irq,(SLAVE)jtag_uart_0.irq) 1 1 1 550
+preplace netloc EXPORT<net_container>system</net_container>(SLAVE)hex0.external_connection,(SLAVE)system.hex0) 1 0 2 NJ 240 NJ
+levelinfo -pg 1 0 40 850
+levelinfo -hier system 50 230 620 830
