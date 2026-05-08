@@ -1,0 +1,86 @@
+#include <stdio.h>
+#include "io.h"
+#include "system.h"
+#include "altera_avalon_timer_regs.h" // Library for Timer registers
+#include "sys/alt_irq.h"              // Library for Interrupt Handling
+
+// Global variables updated by ISR
+volatile int hours = 0;
+volatile int minutes = 0;
+volatile int seconds = 0;
+volatile int mode = 0;
+
+// 1. Interrupt Service Routine (ISR) - Executed every 1 second
+void timer_isr(void* context) {
+    // Check if mode is 0 (Count up mode)
+    if (mode == 0) {
+        seconds++;
+        if (seconds >= 60) {
+            seconds = 0;
+            minutes++;
+            if (minutes >= 60) {
+                minutes = 0;
+                hours++;
+                if (hours >= 24) hours = 0;
+            }
+        }
+    }
+
+    // Clear the TO (Timeout) bit to acknowledge the interrupt
+    IOWR_ALTERA_AVALON_TIMER_STATUS(TIMER_0_BASE, 0);
+}
+
+// 2. Timer Initialization Function
+void init_timer() {
+    // Register the ISR with the system
+    alt_ic_isr_register(TIMER_0_IRQ_INTERRUPT_CONTROLLER_ID,
+                        TIMER_0_IRQ,
+                        timer_isr,
+                        NULL, NULL);
+
+    // Configure Timer: Continuous mode, Interrupt enabled, Start
+    IOWR_ALTERA_AVALON_TIMER_CONTROL(TIMER_0_BASE,
+        ALTERA_AVALON_TIMER_CONTROL_CONT_MSK |
+        ALTERA_AVALON_TIMER_CONTROL_ITO_MSK  |
+        ALTERA_AVALON_TIMER_CONTROL_START_MSK);
+}
+
+int main() {
+    unsigned int sw_val;
+    int tens_val, ones_val;
+
+    printf("System Started: Hardware Timer Enabled\n");
+
+    // Initialize Timer
+    init_timer();
+
+    while (1) {
+        // Read switches (CPU is free to do this at full speed)
+        sw_val = IORD(SWITCHES_0_BASE, 0);
+
+        mode = (sw_val >> 8) & 0x03;
+        tens_val = (sw_val >> 4) & 0x0F;
+        ones_val = (sw_val & 0x0F) > 9 ? 9 : (sw_val & 0x0F);
+
+        // Manual adjustment logic (Only if not in Count up mode)
+        if (mode != 0) {
+            if (mode == 1) { // Set Seconds
+                seconds = ((tens_val > 5 ? 5 : tens_val) * 10) + ones_val;
+            }
+            else if (mode == 2) { // Set Minutes
+                minutes = ((tens_val > 5 ? 5 : tens_val) * 10) + ones_val;
+            }
+            else if (mode == 3) { // Set Hours
+                int temp_h = (tens_val * 10) + ones_val;
+                hours = (temp_h > 23) ? 23 : temp_h;
+            }
+        }
+
+        // Update Display (Unified HEX IP - 3 Write Regs)
+        IOWR(HEX_0_BASE, 0, ((seconds / 10) << 4) | (seconds % 10));
+        IOWR(HEX_0_BASE, 1, ((minutes / 10) << 4) | (minutes % 10));
+        IOWR(HEX_0_BASE, 2, ((hours / 10) << 4)   | (hours % 10));
+    }
+
+    return 0;
+}

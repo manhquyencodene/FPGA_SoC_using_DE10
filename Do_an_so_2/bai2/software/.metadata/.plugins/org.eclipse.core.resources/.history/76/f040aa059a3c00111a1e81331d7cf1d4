@@ -1,0 +1,100 @@
+#include <stdio.h>
+#include "io.h"
+#include "system.h"
+#include "altera_avalon_timer_regs.h"
+#include "sys/alt_irq.h"
+
+// --- GLOBAL VARIABLES ---
+// Must use 'volatile' because these are modified by the hardware interrupt
+volatile int hours = 0;
+volatile int minutes = 0;
+volatile int seconds = 0;
+volatile int mode = 0;
+
+// --- INTERRUPT SERVICE ROUTINE (ISR) ---
+// This runs automatically in the background every 1 second
+void timer_isr(void* context) {
+    if (mode == 0) {
+        seconds++;
+        if (seconds >= 60) {
+            seconds = 0;
+            minutes++;
+            if (minutes >= 60) {
+                minutes = 0;
+                hours++;
+                if (hours >= 24) hours = 0;
+            }
+        }
+    }
+    // Clear the timeout flag so the interrupt doesn't loop infinitely
+    IOWR_ALTERA_AVALON_TIMER_STATUS(TIMER_0_BASE, 0);
+}
+
+// --- TIMER INITIALIZATION ---
+void init_timer() {
+    alt_ic_isr_register(TIMER_0_IRQ_INTERRUPT_CONTROLLER_ID,
+                        TIMER_0_IRQ,
+                        timer_isr,
+                        NULL, NULL);
+
+    IOWR_ALTERA_AVALON_TIMER_CONTROL(TIMER_0_BASE,
+        ALTERA_AVALON_TIMER_CONTROL_CONT_MSK |
+        ALTERA_AVALON_TIMER_CONTROL_ITO_MSK  |
+        ALTERA_AVALON_TIMER_CONTROL_START_MSK);
+}
+
+int main() {
+    unsigned int sw_val;
+    int tens_val, ones_val;
+
+    printf("Clock operation: HEX IP + Switch PIO + Hardware Timer...\n");
+    printf("Mode 00: Count up | 01: Set Seconds | 10: Set Minutes | 11: Set Hours\n");
+
+    // Start the hardware timer
+    init_timer();
+
+    while (1) {
+        sw_val = IORD(SWITCHES_0_BASE, 0);
+
+        mode = (sw_val >> 8) & 0x03;     // Get SW9, SW8 status
+        tens_val = (sw_val >> 4) & 0x0F; // Get SW7 - SW4 status (Tens digit)
+        ones_val = sw_val & 0x0F;        // Get SW3 - SW0 status (Ones digit)
+
+        // --- CONTROL ONES DIGIT ---
+        if (ones_val > 9) ones_val = 9;
+
+        // --- CHECK MODE ---
+        if (mode == 0) {
+            // Mode 00: CLOCK COUNT UP
+            // No 'for' loop needed here anymore!
+            // The CPU is completely free because timer_isr() handles the counting.
+        }
+        else {
+            // Mode 01, 10, 11: PAUSE COUNTING & ADJUST
+            if (mode == 1) {
+                // 01: Set Seconds
+                if (tens_val > 5) tens_val = 5;
+                seconds = (tens_val * 10) + ones_val;
+            }
+            else if (mode == 2) {
+                // 10: Set Minutes
+                if (tens_val > 5) tens_val = 5;
+                minutes = (tens_val * 10) + ones_val;
+            }
+            else if (mode == 3) {
+                // 11: Set Hours
+                if (tens_val > 2) tens_val = 2;
+                int temp_hours = (tens_val * 10) + ones_val;
+                if (temp_hours > 23) temp_hours = 23;
+                hours = temp_hours;
+            }
+        }
+
+        // --- OUTPUT DATA TO UNIFIED HEX IP ---
+        IOWR(HEX_0_BASE, 0, ((seconds / 10) << 4) | (seconds % 10));
+        IOWR(HEX_0_BASE, 1, ((minutes / 10) << 4) | (minutes % 10));
+        IOWR(HEX_0_BASE, 2, ((hours / 10) << 4)   | (hours % 10));
+    }
+
+    return 0;
+}
